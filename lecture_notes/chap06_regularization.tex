@@ -26,7 +26,7 @@
 % - items in lists start with dash not bullet point.
 \usepackage{enumitem}
 \setlist{label=\textemdash,
-  itemsep=0pt, topsep=3pt, partopsep=0pt} 
+  itemsep=0pt, topsep=3pt, partopsep=0pt}
 
 % Include graphics
 \usepackage{graphicx}
@@ -104,7 +104,7 @@ Yet, this fit has also some drawbacks.
 
 \subsubsection{When $p$ in larger than $n$}
 \label{LargeP}
-When $X^T X$ is not invertible, we still have ways to find $\hat{\beta}$. In this case, we can use the pseudo-inverse of $X$. We can also use numerical methods to solve a linear system of $p$ equations such as gradient descent (minimising a convexe function), Gaussian elimination or LU decomposition.
+When $X^T X$ is not invertible, we still have ways to find $\hat{\beta}$. In this case, we can use the pseudo-inverse of $X$. We can also use numerical methods to solve a linear system of $p$ equations such as gradient descent (minimizing a convexe function), Gaussian elimination or LU decomposition.
 On the Figure \ref{LRPseudoInverse}, we can compare the predicted coefficient (thanks to a linear regression using pseudo-inverse) and the true coefficient when $p = 1000$ and $n = 10$. So, we're in the case of the large $p$, small $n$ configuration. In fact, the outcome vector $y$ was created by a linear combination of the data-matrix $X$ using the weights shown on the left hand graph. 
 
 The objectif was to retrieve those weights using a linear regression on the vectors $X$ and $y$. 10 causal features were highlighted in orange on both graphs. A good approximation would be to use only those 10 causal features. Nevertheless, as the right hand graph shows, the linear regression gives coefficients that have approximately the same weight. The causal features are lost entirely in the noise created by the others coefficients. Information has been lost. Regularization is a way of addressing this issue.
@@ -121,16 +121,66 @@ The Figure \ref{LRPseudoInverse} showed that the linear regression used all the 
 
  So, instead of minimizing only the sum of squared error, the idea of regularization is to minimize
  \[ \text{Sum of squared error} + \lambda \text{ prenalty on model complexity}.\]
-Thus, when using regularization, the estimator is biased (if $\lambda \not = 0$). Yet, because the model will be less complex, we'll have a smaller variance. We're willing to accept a biased estimator in exchange for smaller variance. So, there's a tradeoff to make between bias and variance. $\lambda$ can be set by cross-validation.
+Thus, when using regularization, the estimator is biased (if $\lambda \not = 0$). Yet, because the model will be less complex, we'll have a smaller variance. We're willing to accept a biased estimator in exchange for smaller variance. So, there's a tradeoff to make between bias and variance. $\lambda$ can be set by cross-validation. \label{CVlambda}
 
 This method is also called \emph{shrinkage} in the context of linear regression. Indeed, this is going to shrink the weights of the model. Thus, the final model is simpler.
 
 The following sections are presenting examples of regularization technique.
 
 \subsection{Ridge regression}
+\subsubsection{Ridge estimator}
 Instead of minimizing our sum of squared error, ridge regression is aimed at minimizing $||y - X\beta||_2^2 + \lambda ||\beta||_2^2$. Thus, the ridge estimator is given by
 \[ \hat{\beta}_\text{ridge} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda ||\beta||_2^2. \]
-\thm If $(X^T X + \lambda I)$ is invertible, the ridge regression estimator is given by
+
+\begin{thm} The ridge regression estimator is given by
 \[ \hat{\beta}_\text{ridge} = (X^T X+ \lambda I)^{-1} X^T y. \]
-\proof test
+\end{thm}
+
+\begin{proof}
+We consider the function $f$ defined by
+\[ f(\beta) = ||y - X\beta||_2^2 + \lambda ||\beta||_2^2.\]
+In order to minimize this function, we take its gradient.
+\[ \nabla_{\beta}f(\beta) = -2X^T (y-X\beta) + 2\lambda \beta.\]
+Then, $\beta_\text{ridge}$ is defined as $\nabla_{\beta}f(\beta_{\text{ridge}}) = 0$. Thus,
+\[ (X^TX+\lambda I)\beta_\text{ridge} = X^T y.\]
+If $\lambda > 0$, $(X^T X + \lambda I)$ is invertible, then
+\[ \hat{\beta}_\text{ridge} = (X^T X+ \lambda I)^{-1} X^T y. \]
+\end{proof}
+
+\subsubsection{Solution path}
+We've said in section \ref{CVlambda} that we can find the optimal value of $\lambda$ by cross-validation. We can compute solution paths (Figure \ref{SolutionPath}) that is a plot showing how the feature coefficient evolves when we decrease the value of $\lambda$. Indeed, when $\lambda = 0$, there's no regularization anymore. And, if $\lambda \gg 1$, we only want to minimize the model complexity. So, all coefficient are then equal to $0$. Then, on the Figure \ref{SolutionPath}, on the left hand, we start with the model in which all coefficients are equal to zero and we end, on the right hand, with the linear regression without any regularization model.
+
+The vertical red line shows the value of $\lambda$ that was obtained by cross-validation. The goal is to choose the value of $\lambda$ that gives the best generalization on another set of data.
+\begin{figure}[!h]
+\centerline{
+\includegraphics[scale = 0.3]{figures/solution_path.png}}
+\caption{Ridge regression solution path}
+\label{SolutionPath}
+\end{figure}
+
+\subsubsection{Standardization}
+The goal of this section is to describe what will happen to our model if we multiply our features by a constant.
+\begin{enumerate}
+\item \textbf{Standard linear regression}~: Without any regularization, we multiply, in the data matrix $X$, the column $j$ by a real $c \not = 0$. So, 
+\[\forall i \in [|0;n-1|], x_{ij} \to c x_{ij}.\]
+Then, the corresponding weight $\beta_j$ is going to be divided by $c$.
+\[ \beta_j \to \frac{1}{c} \beta_j.\]
+Thus, the weight is different but the solution is similar.
+\item \textbf{Ridge regression}~: When we multiply, in the data matrix $X$, the column $j$ by a real $c \not = 0$, we can't know what will happen because of the penalization term $\lambda \beta_j^2$. So, it's important to use standardized feature \emph{before} regularizing linear regression.
+\end{enumerate}
+\subsubsection{Advantages and drawbacks}
+Finally,
+\begin{enumerate}
+\item \textbf{Advantages}~: Ridge regression has several advantages
+\begin{itemize}
+\item Correlated variables get similar weights.
+\item Identical variables get identical weights.
+\item An analytical solution is provided
+\end{itemize}
+\item \textbf{Drawbacks}~: And it also have drawbacks
+\begin{itemize}
+\item Ridge regression shrinks coefficients but does \emph{not} result in a sparse model. A model is sparse when many coefficient get a weight of $0$. Then, when a model is sparse, many coefficient can be eliminated from the model.
+\end{itemize} 
+\end{enumerate}
+
 \end{document}
