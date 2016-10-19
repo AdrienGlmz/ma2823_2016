@@ -183,4 +183,133 @@ Finally,
 \end{itemize} 
 \end{enumerate}
 
+\subsection{Lasso regression}
+\subsubsection{Lasso estimator}
+Instead of using the $L^2$ penalty, like the Ridge estimator, the Lasso estimator is based on a $L^1$ penalty.\\ Hence we have to minimize : $||y - X\beta||_2^2 + \lambda ||\beta||_1$.\\ 
+\begin{equation}
+\hat{\beta}_\text{lasso} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda ||\beta||_1.
+\label{DefLagrange}
+\end{equation}
+~\\
+Unlike the Ridge estimator, there is no explicit solution.\\
+We can however, transform this problem into a quadratic problem.
+
+\begin{thm} There is a bijection between $\lambda$ and $t$ such as ${\beta}_\text{lasso}$ is solution of the quadratic problem : 
+\begin{equation}
+\hat{\beta}_\text{lasso} = \arg \min_\beta ||y - X\beta||_2^2 \quad s.t \quad ||\beta||_1\leq t.
+\label{DefQuadratic}
+\end{equation}
+\end{thm}
+
+\begin{proof}
+We consider the functions $f$ and $g$ defined by
+\[ f(\beta) = ||y - X\beta||_2^2.\]
+\[ g(\beta) = ||\beta||_1 - t.\]
+From (\ref{DefQuadratic}) to (\ref{DefLagrange}). Let $H$ be the feasible region, i.e, $\{ \beta$ $, g(\beta) \leq 0\}$
+\[ \hat{\beta}_\text{0} = \arg \min_{\beta \in H} ||y - X\beta||_2^2 \quad.\]
+Two cases are possible:\\
+\begin{itemize}
+\item Case 1 : the unconstrained minimum lies in the feasible region. Problem is solved.
+\item Case 2 : the unconstrained minimum does not lie in the feasible region. \\
+In this case, the solution is the intersection of the iso-contours of $f$ with the boundary of $H$, as shown in the next figure.
+\end{itemize}
+~\\
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.7\textwidth]{figures/sol_lasso.png}}
+\caption{Solution of Lasso-estimator}
+\label{SolutionLasso}
+\end{figure}
+~\\
+Furthermore, we know that the gradient of $g(\beta)$ is orthogonal to the boundary of $H$.
+The gradient of $f(\beta)$ is also orthogonal to the iso-contours of $f$.\\
+Hence, at $\beta_{0}$, the gradient of $f$ and $g$ are parallel.\\
+We also know that $\nabla_{\beta}g(\beta)$ points towards the unconstrained minimum of $f$ while $\nabla_{\beta}f(\beta)$ points in the opposite direction.\\
+~\\
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.7\textwidth]{figures/sol_lasso2.png}}
+\caption{Gradients of $f$ and $g$ and solution of Lasso-estimator}
+\label{SolutionLasso2}
+\end{figure}
+~\\
+We can conclude from previous results that $\nabla_{\beta}f(\beta) = -\lambda \nabla_{\beta}g(\beta)$.\\
+The Lagrangian of the Lasso-problem : $L(\beta) = f(\beta) + \lambda g(\beta)$ is minimized at $\beta_{0}$. \\
+
+From (\ref{DefLagrange}) to (\ref{DefQuadratic}). Let us fix $\lambda$ and define $\beta_*  = \arg \min_\beta f(\beta) + \lambda ||\beta||_1^2$. Let us define $t = ||\beta_*||_1^2.$\\ 
+Then, for any $\beta, f(\beta_*)+ \lambda ||\beta_*||_1^2 \leq f(\beta)+\lambda||\beta||_1^2$. Hence $f(\beta_*)\leq f(\beta)+\lambda(||\beta||_1^2 - t).$\\
+Under the constraint that $||\beta||_1^2 \leq t, \lambda(||\beta||_1^2 - t) \leq 0$. Hence $f(\beta_*) \leq f(\beta)$, i.e. $\beta_* = \beta_{lasso}$\\
+
+Thus, the two problems are equivalent.
+\end{proof}
+
+\subsection{Elastic Net}
+\subsubsection{Elastic Net estimator}
+The Elastic Net estimator is a convex combination of Lasso and Ridge. It is defined by :
+\[ \hat{\beta}_\text{enet} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda(\alpha||\beta||_2^2 + (1 - \alpha)||\beta||_1) \]
+The main advantage is to combine both :
+\begin{itemize}
+\item It selects variables like the Lasso-estimator. 
+\item It shrinks correlated and identical variables like the Ridge-estimator
+\end{itemize}
+
+\subsubsection{Comparison of Elastic Net-estimator and Lasso-estimator}
+The Figure \ref{Lassoenet} represents results of both Lasso-estimator and Elastic Net-estimator on Leukemia data. We can see that Elastic Net results in more non-zero coefficients than Lasso, but with smaller amplitudes.
+
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.9\textwidth]{figures/lassoenet.png}}
+\caption{Comparison of weights on Lasso-estimator and Elastic Net estimator}
+\label{Lassoenet}
+\end{figure}
+
+\subsection{$L^q$ regression}
+\subsubsection{$L^q$ estimator}
+The $L^q$ estimator is a generalization of the Ridge and Lasso estimator : the penalty is based on the $L^q$ norm of $\beta$.\\
+\[||\beta||_q^q = \sum_{i = 1}^{n}{\beta_{i}^q}\]
+The $L^q$ estimator is then defined by :
+\[ \hat{\beta}_\text{$L^q$} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda ||\beta||_q^q. \]
+We have the same theorem to transform this problem into a quadratic problem with constraints.\\
+
+\begin{thm} There is a bijection between $\lambda$ and $t$ such that ${\beta}_\text{$L^q$}$ is solution of the quadratic problem : 
+\[ \hat{\beta}_\text{$L^q$} = \arg \min_\beta ||y - X\beta||_2^2 \quad s.t \quad ||\beta||_q^q\leq t. \]
+\end{thm}
+
+\begin{proof}
+The proof follow the same steps than the previous one.
+\end{proof}
+
+The Figure \ref{Bound2} represents the feasible sets for different values of $q$.
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.7\textwidth]{figures/bound.png}}
+\caption{Boundaries of the feasible set with different values of q}
+\label{Bound2}
+\end{figure}
+
+\subsubsection{Comparison between Lasso and Ridge}
+Because the feasible depends on the value of $q$, the Ridge $(q = 2)$ and Lasso $(q = 1)$ estimator will be different. The feasible set will be a square in one case and a circle in the other.
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.7\textwidth]{figures/comparison.png}}
+\caption{Comparison of the Lasso-estimator and the Ridge-estimator}
+\label{Comparison}
+\end{figure}
+
+\subsection{Structured Regularization}
+\subsubsection{Group Lasso}
+The \emph{group Lasso} is a variant of Lasso. All p variables are partitioned in $K$ predefined groups of variables that are known to work together and expected to work together and thus be all active or inactive together. For instance, genes belonging to the same biological pathway can form a group.\\
+~\\
+Let $X_k$ be the features belonging to group $k$. Let $p_k$ be the size of group $k$. We have : $\sum_{k = 1}^K{p_k} = p$. We can define the Group Lasso-estimator:
+\[ \hat{\beta}_\text{grlasso} = \arg \min_\beta ||y - \sum_{k = 1}^K{X_k\beta_k}||_2^2 + \lambda \sum_{k = 1}^K{\sqrt{p_k}||\beta_k||_2}\]
+
+\subsubsection{Other structured penalties}
+Other regularizations exist :
+\begin{itemize}
+\item Overlapping groups
+\item Graphs
+\item Trees
+\item Multiple related Tasks
+\end{itemize}
+
 \end{document}
