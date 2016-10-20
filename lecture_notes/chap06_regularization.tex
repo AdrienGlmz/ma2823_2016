@@ -148,14 +148,15 @@ If $\lambda > 0$, $(X^T X + \lambda I)$ is invertible, then
 \end{proof}
 
 \subsubsection{Solution path}
-We've said in section \ref{CVlambda} that we can find the optimal value of $\lambda$ by cross-validation. We can compute solution paths (Figure \ref{SolutionPath}) that is a plot showing how the feature coefficient evolves when we decrease the value of $\lambda$. Indeed, when $\lambda = 0$, there's no regularization anymore. And, if $\lambda \gg 1$, we only want to minimize the model complexity. So, all coefficient are then equal to $0$. Then, on the Figure \ref{SolutionPath}, on the left hand, we start with the model in which all coefficients are equal to zero and we end, on the right hand, with the linear regression without any regularization model.
+\label{SectionSolutionPathRR}
+We've said in section \ref{CVlambda} that we can find the optimal value of $\lambda$ by cross-validation. We can compute solution paths (Figure \ref{SolutionPathRR}) that is a plot showing how the feature coefficient evolves when we decrease the value of $\lambda$. Indeed, when $\lambda = 0$, there's no regularization anymore. And, if $\lambda \gg 1$, we only want to minimize the model complexity. So, all coefficient are then equal to $0$. Then, on the Figure \ref{SolutionPath}, on the left hand, we start with the model in which all coefficients are equal to zero and we end, on the right hand, with the linear regression without any regularization model.
 
 The vertical red line shows the value of $\lambda$ that was obtained by cross-validation. The goal is to choose the value of $\lambda$ that gives the best generalization on another set of data.
 \begin{figure}[!h]
 \centerline{
-\includegraphics[scale = 0.3]{figures/solution_path.png}}
+\includegraphics[width = 0.7\textwidth]{figures/solution_path_ridge_regression.png}}
 \caption{Ridge regression solution path}
-\label{SolutionPath}
+\label{SolutionPathRR}
 \end{figure}
 
 \subsubsection{Standardization}
@@ -185,14 +186,13 @@ Finally,
 
 \subsection{Lasso regression}
 \subsubsection{Lasso estimator}
-Instead of using the $L^2$ penalty, like the Ridge estimator, the Lasso estimator is based on a $L^1$ penalty.\\ Hence we have to minimize : $||y - X\beta||_2^2 + \lambda ||\beta||_1$.\\ 
+Instead of using the $L^2$ penalty, like the Ridge estimator, the Lasso estimator is based on a $L^1$ penalty. Hence we have to minimize : $||y - X\beta||_2^2 + \lambda ||\beta||_1$.
 \begin{equation}
 \hat{\beta}_\text{lasso} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda ||\beta||_1.
 \label{DefLagrange}
 \end{equation}
-~\\
-Unlike the Ridge estimator, there is no explicit solution.\\
-We can however, transform this problem into a quadratic problem.
+
+Unlike the Ridge estimator, there is no explicit solution. We can however, transform this problem into a quadratic problem.
 
 \begin{thm} There is a bijection between $\lambda$ and $t$ such as ${\beta}_\text{lasso}$ is solution of the quadratic problem : 
 \begin{equation}
@@ -242,6 +242,37 @@ Under the constraint that $||\beta||_1^2 \leq t, \lambda(||\beta||_1^2 - t) \leq
 
 Thus, the two problems are equivalent.
 \end{proof}
+\subsubsection{Solution path}
+As we did before in Section \ref{SectionSolutionPathRR} for the Ridge Regression estimator, we can also compute solution paths for the Lasso estimator (Figure \ref{SolutionPathLasso}). On the left hand of the graph, we start with high values of $\lambda$ that give very simple models. We move towards lower values of $\lambda$ that gives more complex models. Yet, there's one difference with the ridge regression solution path. In fact, we see here that our features enter the model one by one: their weight is equal to $0$ for all values of $\lambda$ lower to a certain $\lambda_0$. For instance, here, when the model complexity increases, features ``enter'' the model in this order: \texttt{lcavol}, \texttt{lweight}, \texttt{svi}, \ldots, \texttt{gleason}. Thus, at every stage, we have a \emph{sparse model}. For example, on the vertical red line, we have a model with only $5$ parameters that are not null (\texttt{lcavol}, \texttt{svi}, \texttt{lweight}, \texttt{pgg45}, \texttt{lbph}).
+
+\subsubsection{Forward stepwise regression}
+We just saw that, in the lasso regularization, the features are ``entering'' the model one by one. Then, we can also get the lasso solution by using forward stepwise regression: the model is built sequentially by adding one variable at a time. Then, this a greedy method.
+\begin{itemize}
+\item We start with the intercept only.
+\item At each step, the variable that most improves the fit is added. All variables are tested and the one that gives the better fit is kept.
+\item We stop when $||\beta ||_1 \leq t$.
+\end{itemize}
+
+\subsubsection{Least Angle Regression}
+The computation of the lasso solution is a quadratic problem, and can be tackled by standard algorithms. But, the least angle regression algorithm is better approach. In the previous section, when a variable and its weight was added in the model, and this weight was never updated. The least angle regression procedure follow the same general scheme, but doesn't add a feature fully into the model. Here, at each step, ``only as much of a variable as needed'' is added. In fact, the coefficient of that feature is increased only until that feature is no longer the one most correlated with the residual $r$. This algorithms can be described as follow
+\begin{enumerate}
+\item Standardize the features to have mean zero and unit norm. Start with the residual $r = y - \bar{y}$ and $\beta_1, \ldots, \beta_p = 0$. The residual is ``what is left to explain from our model''. The perfect model would have a residual that is equal to $0$.
+\item Find the one feature that explains $r$ the most. In other words, find the feature $x_j$ most correlated with $r$.
+\item Update the weight $\beta_j$ until $x_j$ is no longer the one most correlated with $r$: move $\beta_j$ from $0$ towards in the direction of the sign of its correlation with $y$. In fact, move $\beta_j$ from $0$ towards its least-squares coefficient $\langle x_j, r \rangle$ until some other competitor $x_k$ has as much correlation with the current residual as does $x_j$. So
+\[ \beta_j + \alpha \frac{1}{\sum_{i=1}^n (x_j^i)^2} \sum_{i=1}^n x_j^i r^i \to \beta_j,\]
+\[ (y - \bar{y}) - \beta_j x_j \to r,\]
+where $\alpha$ is called the step size.
+\item Move $\beta_j$ and $\beta_k$ in the direction defined by their joint least squares coefficient of the current residual on $\langle x_j, x_k \rangle$ until some other competitor $x_l$ has a much correlation with the current residual $r = (y-\bar{y} - \beta_j x_j - \beta_k x_k)$.
+\item If a non-zero coefficient hits zero, drop its variable from the active set of variables and recompute the current joint least squares direction.
+\item Continue in this way until all $p$ predictors have been entered.
+\end{enumerate}
+
+\begin{figure}[!h]
+\centerline{
+\includegraphics[width = 0.7\textwidth]{figures/solution_path_lasso.png}}
+\caption{Ridge regression solution path}
+\label{SolutionPathLasso}
+\end{figure}
 
 \subsection{Elastic Net}
 \subsubsection{Elastic Net estimator}
@@ -250,8 +281,9 @@ The Elastic Net estimator is a convex combination of Lasso and Ridge. It is defi
 The main advantage is to combine both :
 \begin{itemize}
 \item It selects variables like the Lasso-estimator. 
-\item It shrinks correlated and identical variables like the Ridge-estimator
+\item It shrinks together correlated and identical variables like the Ridge-estimator
 \end{itemize}
+Of course, this cames with the cost of having two parameters ($\lambda$, $\alpha$) to set instead of one.
 
 \subsubsection{Comparison of Elastic Net-estimator and Lasso-estimator}
 The Figure \ref{Lassoenet} represents results of both Lasso-estimator and Elastic Net-estimator on Leukemia data. We can see that Elastic Net results in more non-zero coefficients than Lasso, but with smaller amplitudes.
@@ -265,7 +297,7 @@ The Figure \ref{Lassoenet} represents results of both Lasso-estimator and Elasti
 
 \subsection{$L^q$ regression}
 \subsubsection{$L^q$ estimator}
-The $L^q$ estimator is a generalization of the Ridge and Lasso estimator : the penalty is based on the $L^q$ norm of $\beta$.\\
+The $L^q$ estimator is a generalization of the Ridge and Lasso estimator : the penalty is based on the $L^q$ norm of $\beta$.
 \[||\beta||_q^q = \sum_{i = 1}^{n}{\beta_{i}^q}\]
 The $L^q$ estimator is then defined by :
 \[ \hat{\beta}_\text{$L^q$} = \arg \min_\beta ||y - X\beta||_2^2 + \lambda ||\beta||_q^q. \]
@@ -288,7 +320,8 @@ The Figure \ref{Bound2} represents the feasible sets for different values of $q$
 \end{figure}
 
 \subsubsection{Comparison between Lasso and Ridge}
-Because the feasible depends on the value of $q$, the Ridge $(q = 2)$ and Lasso $(q = 1)$ estimator will be different. The feasible set will be a square in one case and a circle in the other.
+Because the feasible depends on the value of $q$, the Ridge $(q = 2)$ and Lasso $(q = 1)$ estimator will be different. The feasible set will be a square in one case and a circle in the other. This helps understand why the $L^1$ norm gives sparse models. Indeed, the $L^1$ ball has corners. This means that when we're moving from the unconstrained minimum towards the ball, we're more likely to ``hit'' a corner of the ball. And, on a corner of the ball, only one feature has a weight non equal to zero.
+
 \begin{figure}[!h]
 \centerline{
 \includegraphics[width = 0.7\textwidth]{figures/comparison.png}}
@@ -298,8 +331,8 @@ Because the feasible depends on the value of $q$, the Ridge $(q = 2)$ and Lasso 
 
 \subsection{Structured Regularization}
 \subsubsection{Group Lasso}
-The \emph{group Lasso} is a variant of Lasso. All p variables are partitioned in $K$ predefined groups of variables that are known to work together and expected to work together and thus be all active or inactive together. For instance, genes belonging to the same biological pathway can form a group.\\
-~\\
+The \emph{group Lasso} is a variant of Lasso. All $p$ variables are partitioned in $K$ predefined groups of variables that are known to work together and expected to work together and thus be all active or inactive together. For instance, genes belonging to the same biological pathway can form a group.
+
 Let $X_k$ be the features belonging to group $k$. Let $p_k$ be the size of group $k$. We have : $\sum_{k = 1}^K{p_k} = p$. We can define the Group Lasso-estimator:
 \[ \hat{\beta}_\text{grlasso} = \arg \min_\beta ||y - \sum_{k = 1}^K{X_k\beta_k}||_2^2 + \lambda \sum_{k = 1}^K{\sqrt{p_k}||\beta_k||_2}\]
 
@@ -310,6 +343,28 @@ Other regularizations exist :
 \item Graphs
 \item Trees
 \item Multiple related Tasks
+\end{itemize}
+
+\section{Conclusion}
+We've replaced the minimization of the sum of squared errors (that gave us the solution of the linear regression problem) by minimizing the sum of squared errors and regularizer that penalizes the model complexity. We've seen 3 major forms of regularizers:
+\begin{itemize}
+\item Ridge regression ($L^2$ norm)
+	\begin{itemize}
+	\item gives similar weights to similar variables,
+	\item doesn't really give sparse solution,
+	\item but has the advantage of having an explicit solution.
+	\end{itemize}
+\item Lasso regression ($L^1$ norm)
+	\begin{itemize}
+	\item randomly picks one of several correlated variables,
+	\item gives sparse solution,
+	\item can be implemented by the Least Angle Regression algorithm.
+	\end{itemize}
+\item Elastic net (combining $L^1$ and $L^2$ norm)
+	\begin{itemize}
+	\item selects variables like the lasso,
+	\item shrinks together the coefficients of correlated variables.
+	\end{itemize}
 \end{itemize}
 
 \end{document}
